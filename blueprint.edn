@@ -1,0 +1,10 @@
+{:itonami.blueprint/id "cloud-itonami-isco-7231"
+ :itonami.blueprint/name "Independent Auto Repair Practice"
+ :itonami.blueprint/isco-08 "7231"
+ :itonami.blueprint/domain :trades/auto-repair
+ :itonami.blueprint/license "AGPL-3.0-or-later"
+ :itonami.blueprint/social-impact [:local-jobs :road-safety :vehicle-affordability]
+ :itonami.blueprint/governor :auto-repair-governor
+ :itonami.blueprint/robotics true
+ :itonami.blueprint/required-technologies [:robotics :forms :telemetry :dmn :bpmn :audit-ledger]
+ :itonami.blueprint/status :public-oss}
