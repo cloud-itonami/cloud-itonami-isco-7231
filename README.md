@@ -45,6 +45,32 @@ Resolves via [`kotoba-lang/occupation`](https://github.com/kotoba-lang/occupatio
 See [`docs/business-model.md`](docs/business-model.md) and
 [`docs/operator-guide.md`](docs/operator-guide.md).
 
+## Reference implementation
+
+`src/auto_repair/{store,governor}.cljc` is a minimal but real
+implementation of the Core Contract above (pure cljc, no external deps):
+
+- `auto-repair.store` — `Store` protocol + `MemStore`: vehicles, repair
+  orders, repair actions, invoices. A repair-action/invoice can only be
+  recorded against a registered order on a registered vehicle (order
+  provenance).
+- `auto-repair.governor` — `AutoRepairGovernor`: `assess` gates a proposal
+  against the order env. Hard invariants force `:hold` (no order,
+  direct-write instead of `:propose`, or an `:engine-running` repair at
+  below `:high` safety-class); engine-running repairs always require
+  `:high`+ safety-class and thus `:human-approval` — they can never be
+  auto-approved; low-confidence proposals also escalate.
+
+```bash
+clojure -M:test   # 7 tests, 13 assertions, green
+```
+
+This is what backs this repo's `:maturity :implemented` entry in
+[`kotoba-lang/occupation`](https://github.com/kotoba-lang/occupation) —
+the 12th `cloud-itonami-isco-*` occupation to reach that tier, after
+`cloud-itonami-isco-6112`, `-2221`, `-7126`, `-4321`, `-9312`, `-5322`,
+`-8332`, `-1321`, `-3253`, `-6210` and `-5223` (ADR-2607012000).
+
 ## License
 
 AGPL-3.0-or-later.
