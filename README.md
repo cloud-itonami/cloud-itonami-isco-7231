@@ -62,7 +62,7 @@ implementation of the Core Contract above (pure cljc, no external deps):
   auto-approved; low-confidence proposals also escalate.
 
 ```bash
-clojure -M:test   # 7 tests, 13 assertions, green
+kbb -M:test   # 7 tests, 13 assertions, green
 ```
 
 This is what backs this repo's `:maturity :implemented` entry in
