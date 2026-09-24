@@ -1,0 +1,32 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:physics` runs it.
+;;
+;; README "Robotics premise": a diagnostic and lift-assist robot for motor
+;; vehicle mechanics and repairers (ISCO 7231) performs vehicle scanning and
+;; component handling; operating a vehicle lift or working near a running
+;; engine needs human sign-off. Its physical work is component handling:
+;; lifting a wheel-and-tyre assembly onto the hub, and draining the engine
+;; oil into the collection pan during a service.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isco-7231"
+ :cases
+ [{:id :wheel-onto-hub
+   :kind :manipulator
+   :procedure "lift-assist arm raises a wheel-and-tyre assembly from the tyre trolley and presents it to the hub of a car on the lift"
+   :params {:l1-m 0.60 :l2-m 0.50 :m1-kg 10.0 :m2-kg 7.0
+            :from [0.70 0.20] :to [0.60 0.80] :duration-s 3.0 :steps 600}
+   :sweep {:param :payload-kg :values [12.0 18.0 25.0 32.0 40.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 250.0 :basis "estimate: continuous shoulder torque of a ~25 kg-payload lift-assist arm class"}
+   :boundary {:lo 2.0 :hi 100.0}}
+  {:id :engine-oil-drain
+   :kind :tank-drain
+   :procedure "with the drain plug out, warm engine oil (5 L in a sump of about 0.05 m2 plan area) drains by gravity into the robot's collection pan; the drain-hole bore area is swept"
+   :params {:tank-area-m2 0.05 :h0-m 0.10 :h-target-m 0.005 :cd 0.60}
+   :sweep {:param :orifice-area-m2 :values [5.0e-5 8.0e-5 1.2e-4 1.5e-4 2.0e-4]}
+   :quantity :time-to-target-s
+   :limit {:max 120.0 :basis "estimate: the drain step's slot in a standard oil-service job time"}
+   :boundary {:lo 2.0e-5 :hi 5.0e-4}}]}
