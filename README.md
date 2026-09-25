@@ -60,9 +60,14 @@ implementation of the Core Contract above (pure cljc, no external deps):
   below `:high` safety-class); engine-running repairs always require
   `:high`+ safety-class and thus `:human-approval` — they can never be
   auto-approved; low-confidence proposals also escalate.
+- `auto-repair.facts` — rules quoted verbatim from a fetched primary source
+  (労働安全衛生規則 第328条の2, via the
+  [e-Gov law API](https://laws.e-gov.go.jp/api/1/lawdata/347M50002000032)).
+  A `:tire-inflation` action is held unless it names its restraint (safety
+  cage) and states a target pressure not above the tire's specified pressure.
 
 ```bash
-kbb -M:test   # 7 tests, 13 assertions, green
+kbb -M:test   # 13 tests, 29 assertions, green
 ```
 
 This is what backs this repo's `:maturity :implemented` entry in
