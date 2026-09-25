@@ -80,3 +80,48 @@
           "欠落した :confidence は 0.0 であって 1.0 ではない")
       (is (not= :proceed (:decision result))
           "確信度不明の提案が自動で通ってはならない"))))
+
+;; 安衛則 第328条の2（auto-repair.facts/tire-inflation）。各 hold は理由の rule
+;; literal まで pin する —— 別の理由で hold した実行を合格に数えないため。
+(defn- inflation [overrides]
+  (merge {:kind :tire-inflation :order-id "order-1" :safety-class :medium
+          :effect :propose :confidence 0.9 :restraint :safety-cage
+          :target-pressure-kpa 240 :spec-pressure-kpa 240}
+         overrides))
+
+(defn- rules-of [result] (set (map :rule (:violations result))))
+
+(deftest tire-inflation-inside-a-cage-at-spec-pressure-proceeds
+  (let [env (governor/env-for-store (fresh-store))
+        result (governor/assess env (inflation {}))]
+    (is (= :proceed (:decision result)))
+    (is (empty? (:violations result)))))
+
+(deftest tire-inflation-without-restraint-holds
+  (let [env (governor/env-for-store (fresh-store))
+        result (governor/assess env (inflation {:restraint nil}))]
+    (is (= :hold (:decision result)))
+    (is (= #{:tire-inflation-restraint} (rules-of result)))
+    (is (= "https://laws.e-gov.go.jp/api/1/lawdata/347M50002000032"
+           (:source (first (:violations result)))))))
+
+(deftest tire-inflation-above-spec-pressure-holds
+  (testing "指定空気圧ちょうどは通り、1 kPa 超えたら止まる（境界）"
+    (let [env (governor/env-for-store (fresh-store))
+          over (governor/assess env (inflation {:target-pressure-kpa 241}))]
+      (is (= :hold (:decision over)))
+      (is (= #{:tire-inflation-pressure} (rules-of over))))))
+
+(deftest tire-inflation-with-undeclared-pressure-holds
+  (testing "指定空気圧を言っていない提案は『適正に調節』を示していない"
+    (let [env (governor/env-for-store (fresh-store))]
+      (doseq [p [{:spec-pressure-kpa nil} {:target-pressure-kpa nil} {:spec-pressure-kpa 0 :target-pressure-kpa 0}]]
+        (let [result (governor/assess env (inflation p))]
+          (is (= :hold (:decision result)) (pr-str p))
+          (is (= #{:tire-inflation-pressure} (rules-of result)) (pr-str p)))))))
+
+(deftest restraint-rule-does-not-touch-other-kinds
+  (let [env (governor/env-for-store (fresh-store))
+        proposal {:kind :standard :order-id "order-1" :safety-class :low
+                  :effect :propose :confidence 0.9}]
+    (is (= :proceed (:decision (governor/assess env proposal))))))

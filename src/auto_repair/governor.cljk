@@ -23,9 +23,14 @@
     3. Engine-running safety — a repair-action of kind `:engine-running`
        always requires :high or higher safety-class, forcing human
        sign-off; it is never auto-approved regardless of confidence.
+    4. Tire-inflation safety — a `:tire-inflation` action must name the
+       restraint (safety cage) it runs inside, and its target pressure must
+       not exceed the tire's specified pressure (労働安全衛生規則 第328条の2,
+       quoted in `auto-repair.facts/tire-inflation`).
   SOFT:
-    4. Confidence floor → escalate."
-  (:require [auto-repair.store :as store]))
+    5. Confidence floor → escalate."
+  (:require [auto-repair.facts :as facts]
+            [auto-repair.store :as store]))
 
 (def confidence-floor 0.6)
 (def safety-classes [:none :low :medium :high :safety-critical])
@@ -34,9 +39,15 @@
   (let [idx (.indexOf safety-classes safety-class)]
     (if (neg? idx) 0 idx)))
 
+(defn- pressure-within-spec? [{:keys [target-pressure-kpa spec-pressure-kpa]}]
+  (and (number? target-pressure-kpa) (number? spec-pressure-kpa)
+       (pos? spec-pressure-kpa)
+       (<= target-pressure-kpa spec-pressure-kpa)))
+
 (defn- hard-violations [{:keys [order-fn]} proposal]
-  (let [{:keys [kind order-id safety-class effect]} proposal
-        found-order (order-fn order-id)]
+  (let [{:keys [kind order-id safety-class effect restraint]} proposal
+        found-order (order-fn order-id)
+        inflation?  (= kind (:kind facts/tire-inflation))]
     (cond-> []
       (nil? found-order)
       (conj {:rule :no-order :detail (str "未登録 repair-order " order-id)})
@@ -47,7 +58,17 @@
       (and (= kind :engine-running)
            (< (safety-rank (or safety-class :none)) (safety-rank :high)))
       (conj {:rule :engine-running-safety
-             :detail ":engine-running repair は :high 以上の safety-class が必須"}))))
+             :detail ":engine-running repair は :high 以上の safety-class が必須"})
+
+      (and inflation? (nil? restraint))
+      (conj {:rule :tire-inflation-restraint
+             :detail "タイヤの空気充てんは安全囲い等の中でのみ（安衛則 第328条の2）"
+             :source (:source-url facts/tire-inflation)})
+
+      (and inflation? (not (pressure-within-spec? proposal)))
+      (conj {:rule :tire-inflation-pressure
+             :detail "充てん圧はタイヤの指定空気圧以下で明示すること（安衛則 第328条の2）"
+             :source (:source-url facts/tire-inflation)}))))
 
 (defn assess
   "Assess a proposal against `env` (a map with `:order-fn` lookup,

@@ -1,0 +1,41 @@
+(ns auto-repair.facts
+  "Disclosed facts the Auto Repair Governor enforces — each one quoted verbatim
+  from a fetched primary source, never recalled.
+
+  Source: 労働安全衛生規則（昭和47年労働省令第32号）第三百二十八条の二
+  （タイヤの空気充てん作業の基準）, as served by e-Gov 法令検索.
+
+  Provenance (2026-09-26): GET of `law-xml-url` returned 200,
+  text/xml;charset=UTF-8, 10,426,303 bytes, sha256
+  55991b3e8d54274a75dbc491eae1c8967248cc2eac5588b14cae65979750fe36; the same
+  endpoint with a non-existent law id (…347M50002000099) returned 404, so the
+  200 is evidence about THIS law. `law-page-url` returned 200 text/html. Each
+  `:source-quote` is the exact text of the <Sentence> element under
+  <Article Num=\"328_2\">.
+
+  What is NOT here: the rule binds the employer and the worker; it does not say
+  what pressure is \"適正\" for a given tire. The governor therefore only
+  demands that the proposal state the tire's specified pressure and not exceed
+  it — the specified value itself comes from the order, not from this file.")
+
+(def law-xml-url
+  "https://laws.e-gov.go.jp/api/1/lawdata/347M50002000032")
+
+(def law-page-url
+  "https://laws.e-gov.go.jp/law/347M50002000032")
+
+(def tire-inflation
+  "The hard rule: compressor inflation of an automobile tire happens with the
+  pressure adjusted for the tire type AND inside a safety cage (or equivalent
+  device) that stops a bursting tire from flying."
+  {:source-url law-xml-url
+   :section "労働安全衛生規則 第三百二十八条の二 第1項"
+   :source-quote "事業者は、自動車（二輪自動車を除く。）用タイヤ（以下この条において「タイヤ」という。）の組立てを行う場合において、空気圧縮機を用いてタイヤに空気を充てんする作業を行うときは、タイヤの破裂等による危険を防止するため、当該作業に従事する労働者に、タイヤの種類に応じて空気の圧力を適正に調節させ、及び安全囲い等破裂したタイヤ等の飛来を防止するための器具を使用させなければならない。"
+   :kind :tire-inflation
+   :requires #{:restraint :pressure-within-spec}})
+
+(def worker-duty
+  "The same duty stated on the worker, so a human operator cannot waive it."
+  {:source-url law-xml-url
+   :section "労働安全衛生規則 第三百二十八条の二 第2項"
+   :source-quote "前項の作業に従事する労働者は、タイヤの種類に応じて空気の圧力を適正に調節し、及び同項の器具を使用しなければならない。"})
